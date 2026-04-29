@@ -13,7 +13,9 @@ Inspired by GitHub's tiny menubar app: dense rows, dark theme, click-to-open, no
 
 ## Screenshots
 
-*Coming soon — see [`docs/screenshots/README.md`](./docs/screenshots/README.md) for what's planned.*
+<img width="382" height="603" alt="image" src="https://github.com/user-attachments/assets/a3248fdc-4130-45a5-a3dc-d35693ee6f20" />
+
+<img width="530" height="615" alt="image" src="https://github.com/user-attachments/assets/6a68a06c-18a8-4618-8a8f-1c6437719091" />
 
 ## Features
 
