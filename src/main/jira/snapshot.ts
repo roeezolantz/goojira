@@ -27,7 +27,7 @@ const FIELDS = [
   'customfield_10016', // Story points (common default)
 ];
 
-function mapIssue(raw: any, baseUrl: string): Issue {
+export function mapIssue(raw: any, baseUrl: string): Issue {
   const f = raw.fields ?? {};
   const sprintField = f.customfield_10020;
   const sprintArr = Array.isArray(sprintField) ? sprintField : [];

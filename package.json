@@ -13,6 +13,23 @@
     "type": "git",
     "url": "https://github.com/roeezolantz/goojira.git"
   },
+  "homepage": "https://github.com/roeezolantz/goojira#readme",
+  "bugs": {
+    "url": "https://github.com/roeezolantz/goojira/issues"
+  },
+  "keywords": [
+    "jira",
+    "menubar",
+    "tray",
+    "electron",
+    "productivity",
+    "macos",
+    "windows",
+    "linux"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -20,7 +37,9 @@
     "publish": "electron-forge publish",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
@@ -59,6 +78,7 @@
     "prettier-plugin-tailwindcss": "^0.6.6",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
-    "vite": "^5.4.3"
+    "vite": "^5.4.3",
+    "vitest": "^2.1.0"
   }
 }
