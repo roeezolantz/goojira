@@ -230,8 +230,7 @@ src/
 - **Story points custom field** is hardcoded to `customfield_10016` — common Jira Cloud default, but instances can vary. Unset in non-default instances → missing badge. Would need an instance-introspection step.
 - **Sprint custom field** assumed `customfield_10020` (Cloud default). Same caveat.
 - **Tray icon is a small, programmatically-drawn J** — fine for development, but for OSS release you'd want a real designer-made icon (`.icns`, `.ico`, multi-size PNG). The README documents what to drop in `assets/`.
-- **No tests** — neither unit nor e2e. The IPC contract is the main thing worth testing; `snapshot.ts`'s mappers second.
-- **Renderer's `contextMenu` store state** is dead since the switch to native menus — should be cleaned up.
+- **Test coverage is narrow** — vitest covers the JQL builders in `queries.ts` and the issue mapper (`mapIssue`) in `snapshot.ts`. Other paths (IO orchestration in `snapshot.ts`, the IPC layer, the renderer) are untested. The IPC contract is the next thing worth covering.
 - **Atlassian deprecated `/rest/api/3/search`** in 2024 (returned 410). We use the new `searchForIssuesUsingJqlEnhancedSearch`. Worth keeping an eye on jira.js changelog for further deprecations.
 - **macOS Accessibility permission** gates the global shortcut. In dev mode it's granted to the bundled `Electron.app` (shared with VSCode/Cursor/Slack/etc.). In a packaged release it's granted to `goojira.app` specifically — separate entry. Dev grants don't carry over.
 - **`forge.config.ts`** declares `MakerDMG`/`MakerSquirrel`/etc. unconditionally; `npm install` on non-host platforms may warn about platform-specific maker deps. CI matrix handles this fine; local dev on a non-darwin box is the case to test.
@@ -241,15 +240,15 @@ src/
 
 ## What "OSS-ready" still needs
 
-Suggested punch-list for the next session — roughly priority order:
+Punch-list, roughly priority order. Items struck through were resolved in the OSS-readiness pass.
 
 ### High-leverage polish
 
 1. **Real app icon set** — `.icns` (mac), `.ico` (win), `iconTemplate.png` + `iconTemplate@2x.png` (mac tray), 512x512 source PNG. Ideally a wordmark/G-shape that scales.
-2. **README rewrite** — currently terse. Add: hero screenshot, demo gif/mp4, feature highlights with images, install instructions per OS, troubleshooting, FAQ. Move detailed dev info into CONTRIBUTING.
-3. **Dead-code cleanup** — `store.ts`'s `contextMenu` / `transitionsByIssue` / `loadTransitions` / `openContextMenu` / `closeContextMenu` are no longer used after the native-menu switch. Remove them.
+2. ~~**README rewrite**~~ — done. Badges, screenshots placeholder, troubleshooting, FAQ, status/roadmap added.
+3. ~~**Dead-code cleanup**~~ — done. `contextMenu` state and related actions removed from `renderer/store.ts`.
 4. **Custom-field configuration UI** — let users override `customfield_10016` / `customfield_10020` in Settings → Display, with a dropdown of all available customfields fetched from `/rest/api/3/field`.
-5. **Unit tests** for `queries.ts` (JQL strings stable across snapshot inputs) and `snapshot.ts`'s `mapIssue` (Jira API response → `Issue`). Vitest is the lightweight pick.
+5. ~~**Unit tests**~~ — done. Vitest covers all 8 JQL builders and `mapIssue`. Wider IPC/renderer coverage is still open.
 
 ### Distribution
 
@@ -270,11 +269,18 @@ Suggested punch-list for the next session — roughly priority order:
 
 ### Project hygiene
 
-17. **CONTRIBUTING.md** has the basics — flesh it out: branching model, PR template, commit-message conventions if any.
-18. **CODE_OF_CONDUCT.md** — typical for OSS.
-19. **GitHub issue templates** — bug report, feature request.
-20. **Demo screenshots / GIF** for the README.
+17. ~~**CONTRIBUTING.md**~~ — Reporting, Testing, expanded Style and Releasing sections added.
+18. ~~**CODE_OF_CONDUCT.md**~~ — done (Contributor Covenant 2.1, link-based).
+19. ~~**GitHub issue templates**~~ — done (YAML form templates for bug + feature, plus PR template).
+20. **Demo screenshots / GIF** for the README — placeholders in `docs/screenshots/` exist; real images still pending.
 21. **Logo and brand colors** — the GitHub-flavored palette is a placeholder. Picking a primary brand color would give the app character.
+
+### Added in the OSS-readiness pass
+
+- `SECURITY.md`, `CHANGELOG.md`, `.nvmrc`, `.github/dependabot.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
+- `package.json` metadata: `engines.node`, `homepage`, `bugs`, `keywords`
+- README badges (CI, license, latest release, platform)
+- Vitest test step in `.github/workflows/ci.yml`
 
 ---
 

@@ -2,6 +2,12 @@
 
 Thanks for considering a contribution to goojira!
 
+## Reporting issues
+
+Bug reports and feature requests live in [GitHub Issues](https://github.com/roeezolantz/goojira/issues). Templates guide you through what to include.
+
+Security vulnerabilities — please email the maintainer directly per [SECURITY.md](./SECURITY.md), don't open a public issue.
+
 ## Dev loop
 
 ```bash
@@ -40,9 +46,17 @@ The contract is single-source-of-truth: forgetting either side is a type error.
 ## Style
 
 - Two-space indent, single quotes, semis, trailing commas (Prettier handles this).
+- Import order is enforced by Prettier — don't fight the formatter, run `npm run format`.
+- Strict TypeScript is non-negotiable. `npm run typecheck` must pass; no `// @ts-ignore` without a comment explaining why.
 - Prefer `type` for unions/aliases, `interface` for object shapes.
 - Avoid `any`; if you need it, leave a comment why.
 - Keep components focused and small. Push state into the Zustand store rather than prop-drilling.
+
+## Testing
+
+- `npm test` — runs the vitest suite. Currently covers the JQL builders in `src/main/jira/queries.ts` and the issue mapper (`mapIssue`) in `src/main/jira/snapshot.ts`. Other functions in `snapshot.ts` are IO-bound (Electron + jira.js) and aren't unit-tested.
+- `npm run test:watch` — re-runs on change.
+- New JQL builders or pure mapping helpers should land with a test. Fixture-driven; no Electron mocking required.
 
 ## Commits / PRs
 
@@ -53,9 +67,10 @@ The contract is single-source-of-truth: forgetting either side is a type error.
 ## Releasing (maintainers only)
 
 1. Bump version in `package.json`.
-2. Tag: `git tag v0.x.y && git push origin v0.x.y`.
-3. CI (`.github/workflows/release.yml`) runs `electron-forge publish` per platform and creates a draft GitHub Release.
-4. Edit the draft notes and publish.
+2. Update `CHANGELOG.md`: move items under `## [Unreleased]` into a new `## [0.x.y] - YYYY-MM-DD` section, then reset the Unreleased block.
+3. Tag: `git tag v0.x.y && git push origin v0.x.y`.
+4. CI (`.github/workflows/release.yml`) runs `electron-forge publish` per platform and creates a draft GitHub Release.
+5. Edit the draft notes and publish.
 
 ## Code of conduct
 

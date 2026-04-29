@@ -1,0 +1,93 @@
+name: Bug report
+description: Something isn't working as expected.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. The more detail, the faster we can act.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear, concise description of what went wrong.
+      placeholder: When I clicked X, I expected Y but got Z.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps so we can hit the same path you did.
+      placeholder: |
+        1. Open the popover
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      placeholder: |
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: e.g. macOS 14.5, Windows 11 23H2, Ubuntu 22.04
+
+  - type: input
+    id: app-version
+    attributes:
+      label: goojira version
+      description: Visible in Settings → About.
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: jira-instance
+    attributes:
+      label: Jira instance type
+      description: goojira currently supports Jira Cloud only. Server / Data Center are not officially supported.
+      options:
+        - Cloud
+        - Server (unsupported)
+        - Data Center (unsupported)
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots, logs, or JQL from the Debug panel
+      description: Optional but very helpful. The Debug panel (7 taps on the version label in Settings) shows the exact JQL strings being sent.
+      render: shell
+
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to submit a PR for this
+          required: false

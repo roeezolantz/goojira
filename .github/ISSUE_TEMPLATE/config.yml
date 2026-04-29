@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+# Once GitHub Discussions is enabled on the repo, add a contact link here:
+# contact_links:
+#   - name: Questions and ideas
+#     url: https://github.com/roeezolantz/goojira/discussions
+#     about: For open-ended questions or design discussions.

@@ -12,4 +12,4 @@ Place app icons here.
 
 `forge.config.ts` references `assets/icon` (no extension) for the packaged app icon — Electron Forge picks the right format per OS.
 
-If `iconTemplate.png` is missing the app falls back to text `FJ` in the menubar — fully functional, just less pretty.
+If `iconTemplate.png` is missing the app falls back to text `GJ` in the menubar — fully functional, just less pretty.
