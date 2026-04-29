@@ -1,18 +1,6 @@
 import { create } from 'zustand';
-import type {
-  Settings,
-  Snapshot,
-  SectionKey,
-  Issue,
-  TransitionInfo,
-} from '@shared/types';
+import type { Settings, Snapshot, SectionKey, Issue } from '@shared/types';
 import { api } from './api';
-
-interface ContextMenu {
-  issueKey: string;
-  x: number;
-  y: number;
-}
 
 interface State {
   snapshot: Snapshot | null;
@@ -25,8 +13,6 @@ interface State {
   assigneeFilter: string | null; // null = anyone, '__me__' = me, '__unassigned__' = none, else accountId
   sprintFilter: 'all' | 'current' | 'backlog';
   collapsedSections: Set<string>;
-  contextMenu: ContextMenu | null;
-  transitionsByIssue: Record<string, TransitionInfo[]>;
   quickCreateOpen: boolean;
   commentForIssueKey: string | null;
   logTimeForIssueKey: string | null;
@@ -41,9 +27,6 @@ interface State {
   toggleSection: (key: string) => void;
   setSettings: (patch: Partial<Settings>) => Promise<void>;
   openIssue: (url: string) => void;
-  openContextMenu: (issueKey: string, x: number, y: number) => void;
-  closeContextMenu: () => void;
-  loadTransitions: (issueKey: string) => Promise<void>;
   transitionIssue: (issueKey: string, transitionId: string) => Promise<void>;
   takeIssue: (issueKey: string) => Promise<void>;
   addComment: (issueKey: string, body: string) => Promise<void>;
@@ -69,8 +52,6 @@ export const useStore = create<State>((set, get) => ({
   assigneeFilter: null,
   sprintFilter: 'all',
   collapsedSections: new Set(),
-  contextMenu: null,
-  transitionsByIssue: {},
   quickCreateOpen: false,
   commentForIssueKey: null,
   logTimeForIssueKey: null,
@@ -139,34 +120,13 @@ export const useStore = create<State>((set, get) => ({
     void api.invoke('app:open-external', { url });
   },
 
-  openContextMenu(issueKey, x, y) {
-    set({ contextMenu: { issueKey, x, y } });
-    void get().loadTransitions(issueKey);
-  },
-
-  closeContextMenu() {
-    set({ contextMenu: null });
-  },
-
-  async loadTransitions(issueKey) {
-    if (get().transitionsByIssue[issueKey]) return;
-    try {
-      const t = await api.invoke('jira:get-transitions', { issueKey });
-      set((s) => ({ transitionsByIssue: { ...s.transitionsByIssue, [issueKey]: t } }));
-    } catch {
-      // ignore
-    }
-  },
-
   async transitionIssue(issueKey, transitionId) {
     await api.invoke('jira:transition', { issueKey, transitionId });
-    set({ contextMenu: null });
     void get().refresh();
   },
 
   async takeIssue(issueKey) {
     await api.invoke('jira:assign-to-me', { issueKey });
-    set({ contextMenu: null });
     void get().refresh();
   },
 
@@ -193,21 +153,19 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setCommentTarget(issueKey) {
-    set({ commentForIssueKey: issueKey, contextMenu: null });
+    set({ commentForIssueKey: issueKey });
   },
 
   setLogTimeTarget(issueKey) {
-    set({ logTimeForIssueKey: issueKey, contextMenu: null });
+    set({ logTimeForIssueKey: issueKey });
   },
 
   copyIssueKey(issue) {
     void navigator.clipboard.writeText(issue.key);
-    set({ contextMenu: null });
   },
 
   copyIssueLink(issue) {
     void navigator.clipboard.writeText(issue.url);
-    set({ contextMenu: null });
   },
 
   hidePopover() {
