@@ -1,0 +1,64 @@
+{
+  "name": "goojira",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lean, cross-platform menubar/tray companion for Jira — your active sprint at a glance.",
+  "main": ".vite/build/main.js",
+  "license": "MIT",
+  "author": {
+    "name": "Roee Zolantz",
+    "email": "zolantz.roee@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roeezolantz/goojira.git"
+  },
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "jira.js": "^4.0.4",
+    "lucide-react": "^0.439.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "update-electron-app": "^3.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.5.0",
+    "@electron-forge/maker-deb": "^7.5.0",
+    "@electron-forge/maker-dmg": "^7.5.0",
+    "@electron-forge/maker-rpm": "^7.5.0",
+    "@electron-forge/maker-squirrel": "^7.5.0",
+    "@electron-forge/maker-zip": "^7.5.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
+    "@electron-forge/plugin-fuses": "^7.5.0",
+    "@electron-forge/plugin-vite": "^7.5.0",
+    "@electron-forge/publisher-github": "^7.5.0",
+    "@electron/fuses": "^1.8.0",
+    "@types/node": "^20.16.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "electron": "^32.0.2",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "postcss": "^8.4.45",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.6",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3"
+  }
+}

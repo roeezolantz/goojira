@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/*  Theme palette via CSS variables. Tailwind colors below resolve to */
+/*  these, so a single class flip on <html data-theme="…"> swaps      */
+/*  the entire visual.                                                */
+/* ------------------------------------------------------------------ */
+
+:root,
+[data-theme='dark'] {
+  --bg: 13 17 23;
+  --bg-elevated: 22 27 34;
+  --bg-hover: 31 36 44;
+  --border: 48 54 61;
+  --border-subtle: 33 38 45;
+  --fg: 230 237 243;
+  --fg-muted: 125 133 144;
+  --fg-subtle: 110 118 129;
+  --accent: 47 129 247;
+  --accent-green: 63 185 80;
+  --accent-red: 248 81 73;
+  --accent-yellow: 210 153 34;
+  --accent-purple: 163 113 247;
+  --shadow-color: 0 0 0;
+  --shadow-strength: 0.4;
+}
+
+[data-theme='light'] {
+  --bg: 255 255 255;
+  --bg-elevated: 246 248 250;
+  --bg-hover: 234 238 242;
+  --border: 208 215 222;
+  --border-subtle: 216 222 228;
+  --fg: 31 35 40;
+  --fg-muted: 101 109 118;
+  --fg-subtle: 110 119 129;
+  --accent: 9 105 218;
+  --accent-green: 26 127 55;
+  --accent-red: 207 34 46;
+  --accent-yellow: 154 103 0;
+  --accent-purple: 130 80 223;
+  --shadow-color: 130 145 165;
+  --shadow-strength: 0.18;
+}
+
+/* `auto` follows the OS, but only when the user hasn't explicitly chosen. */
+@media (prefers-color-scheme: light) {
+  [data-theme='auto'] {
+    --bg: 255 255 255;
+    --bg-elevated: 246 248 250;
+    --bg-hover: 234 238 242;
+    --border: 208 215 222;
+    --border-subtle: 216 222 228;
+    --fg: 31 35 40;
+    --fg-muted: 101 109 118;
+    --fg-subtle: 110 119 129;
+    --accent: 9 105 218;
+    --accent-green: 26 127 55;
+    --accent-red: 207 34 46;
+    --accent-yellow: 154 103 0;
+    --accent-purple: 130 80 223;
+    --shadow-color: 130 145 165;
+    --shadow-strength: 0.18;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+body {
+  background: transparent;
+}
+
+/* The popover gets rounded corners + a subtle border. The settings window keeps its native chrome. */
+.app-popover {
+  height: 100vh;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--border));
+  background: rgb(var(--bg));
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgb(var(--shadow-color) / var(--shadow-strength));
+  /* Smooth theme transitions feel like a quality detail. */
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.app-settings {
+  height: 100vh;
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+  display: flex;
+  flex-direction: column;
+  user-select: text;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--border));
+  border-radius: 4px;
+}
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--fg-subtle));
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+/* Smoothly fade interactive states across the app. */
+button,
+a,
+[role='button'] {
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
