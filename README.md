@@ -35,6 +35,21 @@ Inspired by GitHub's tiny menubar app: dense rows, dark theme, click-to-open, no
 - **Token stored in OS keychain** (Keychain on macOS, Credential Vault on Windows, libsecret on Linux) via Electron `safeStorage`.
 - **Auto-update** from GitHub Releases (when packaged).
 
+## Download
+
+Pre-built installers for every release live on the [Releases page](https://github.com/roeezolantz/goojira/releases/latest):
+
+- **macOS** — `goojira-x.y.z.dmg` (Apple Silicon + Intel via universal build) or `goojira-darwin-*.zip`
+- **Windows** — `goojira-x.y.z.Setup.exe` (Squirrel installer)
+- **Linux** — `.deb` (Debian/Ubuntu) or `.rpm` (Fedora/RHEL)
+
+Pre-1.0 builds are **not yet code-signed**. On first launch you'll see a warning:
+
+- **macOS**: right-click the app → **Open** → confirm the dialog. Only needed once.
+- **Windows**: SmartScreen → **More info** → **Run anyway**.
+
+Code signing and notarization are on the roadmap. Once installed, the app auto-updates from GitHub Releases.
+
 ## Quick start (dev)
 
 Requires **Jira Cloud** (Atlassian-hosted). Server / Data Center isn't supported yet.
