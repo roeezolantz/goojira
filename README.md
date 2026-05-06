@@ -37,18 +37,34 @@ Inspired by GitHub's tiny menubar app: dense rows, dark theme, click-to-open, no
 
 ## Download
 
+### macOS (Apple Silicon) — via Homebrew
+
+```bash
+brew install --cask --no-quarantine roeezolantz/goojira/goojira
+```
+
+The `--no-quarantine` flag is required while builds are unsigned (see *Caveat* below). Upgrade later with `brew upgrade --cask goojira`.
+
+### Direct downloads
+
 Pre-built installers for every release live on the [Releases page](https://github.com/roeezolantz/goojira/releases/latest):
 
-- **macOS** — `goojira-x.y.z.dmg` (Apple Silicon + Intel via universal build) or `goojira-darwin-*.zip`
+- **macOS (Apple Silicon)** — `goojira-x.y.z-arm64.dmg`
 - **Windows** — `goojira-x.y.z.Setup.exe` (Squirrel installer)
-- **Linux** — `.deb` (Debian/Ubuntu) or `.rpm` (Fedora/RHEL)
+- **Linux** — `.deb` (Debian / Ubuntu) or `.rpm` (Fedora / RHEL)
 
-Pre-1.0 builds are **not yet code-signed**. On first launch you'll see a warning:
+### Caveat: unsigned builds
 
-- **macOS**: right-click the app → **Open** → confirm the dialog. Only needed once.
-- **Windows**: SmartScreen → **More info** → **Run anyway**.
+Pre-1.0 builds are **not yet code-signed or notarized**. On first launch:
 
-Code signing and notarization are on the roadmap. Once installed, the app auto-updates from GitHub Releases.
+- **macOS** — you'll likely see *"goojira is damaged and can't be opened"*. That's macOS rejecting an unsigned app downloaded from the internet. Clear the quarantine flag once:
+  ```bash
+  xattr -cr /Applications/goojira.app
+  ```
+  Then double-click works. (The Homebrew install above bypasses this with `--no-quarantine`.)
+- **Windows** — SmartScreen → **More info** → **Run anyway**.
+
+Code signing and notarization are on the roadmap. Once running, the app auto-updates from GitHub Releases.
 
 ## Quick start (dev)
 
