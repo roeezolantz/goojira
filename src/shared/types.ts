@@ -135,8 +135,13 @@ export interface TransitionInfo {
 
 export type TokenStatus =
   | 'missing' // No token file on disk.
-  | 'unreadable' // File exists but can't be decrypted (typical after upgrading an unsigned build).
-  | 'present'; // File exists and decrypts successfully.
+  | 'unreadable' // File exists but can't be decrypted under any backend.
+  | 'keychain' // Present, encrypted via Electron safeStorage (OS keychain).
+  | 'machine-bound'; // Present, encrypted with a machine-derived key (fallback when keychain isn't available).
+
+export function isTokenAvailable(s: TokenStatus): boolean {
+  return s === 'keychain' || s === 'machine-bound';
+}
 
 export interface ConnectionDiagnostic {
   // The URL we attempted to reach (best-effort; may include the request path).

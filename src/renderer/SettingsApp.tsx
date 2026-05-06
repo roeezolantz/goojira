@@ -11,6 +11,7 @@ export function SettingsApp() {
 
   const [token, setToken] = useState('');
   const [tokenStatus, setTokenStatus] = useState<TokenStatus>('missing');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [test, setTest] = useState<ConnectionTestResult | null>(null);
   const [testing, setTesting] = useState(false);
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
@@ -31,18 +32,24 @@ export function SettingsApp() {
 
   if (!settings) return <div className="app-settings p-6 text-fg-muted">Loading…</div>;
 
-  const hasToken = tokenStatus === 'present';
+  const hasToken = tokenStatus === 'keychain' || tokenStatus === 'machine-bound';
 
   const saveToken = async () => {
     if (!token.trim()) return;
-    await api.invoke('auth:set-token', { token: token.trim() });
-    setToken('');
-    await refreshTokenStatus();
+    setSaveError(null);
+    try {
+      await api.invoke('auth:set-token', { token: token.trim() });
+      setToken('');
+      await refreshTokenStatus();
+    } catch (e) {
+      setSaveError((e as Error).message);
+    }
   };
 
   const clearToken = async () => {
     await api.invoke('auth:clear-token');
     setTest(null);
+    setSaveError(null);
     await refreshTokenStatus();
   };
 
@@ -107,7 +114,7 @@ export function SettingsApp() {
           />
         </Field>
         <Field label="API Token">
-          {tokenStatus === 'present' ? (
+          {tokenStatus === 'keychain' ? (
             <div className="flex items-center gap-2">
               <span className="rounded bg-bg-elevated px-2 py-1 text-xs text-fg-muted">
                 ●●●●●●●● stored in OS keychain
@@ -116,13 +123,29 @@ export function SettingsApp() {
                 Clear
               </button>
             </div>
+          ) : tokenStatus === 'machine-bound' ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-bg-elevated px-2 py-1 text-xs text-fg-muted">
+                  ●●●●●●●● stored (machine-bound encryption)
+                </span>
+                <button onClick={() => void clearToken()} className={btnSecondary}>
+                  Clear
+                </button>
+              </div>
+              <p className="text-[11px] text-fg-subtle">
+                OS keychain unavailable on this build — fell back to AES-GCM with a
+                key derived from your machine ID + app path. Stronger than plaintext;
+                weaker than a signed/notarized build using the OS keychain.
+              </p>
+            </div>
           ) : tokenStatus === 'unreadable' ? (
             <div className="flex flex-col gap-2">
               <div className="rounded border border-accent-yellow/40 bg-accent-yellow/10 p-2 text-xs text-accent-yellow">
                 <div className="mb-1 font-semibold">Stored token can&apos;t be decrypted.</div>
-                Common after upgrading an unsigned build — the OS keychain key
-                changes with each ad-hoc signature. Click Clear and paste the
-                token in again.
+                Neither the OS keychain nor the machine-bound fallback could
+                decrypt the stored token. Click Clear and paste the token in
+                again.
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => void clearToken()} className={btnSecondary}>
@@ -131,17 +154,24 @@ export function SettingsApp() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="paste token from id.atlassian.com"
-                className={inputCls}
-              />
-              <button onClick={() => void saveToken()} className={btnPrimary} disabled={!token.trim()}>
-                Save
-              </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="paste token from id.atlassian.com"
+                  className={inputCls}
+                />
+                <button onClick={() => void saveToken()} className={btnPrimary} disabled={!token.trim()}>
+                  Save
+                </button>
+              </div>
+              {saveError && (
+                <div className="rounded border border-accent-red/40 bg-accent-red/10 p-2 text-xs text-accent-red">
+                  <span className="font-semibold">Save failed:</span> {saveError}
+                </div>
+              )}
             </div>
           )}
         </Field>

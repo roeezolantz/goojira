@@ -340,8 +340,9 @@ const btnDanger =
   'inline-flex items-center gap-1.5 rounded border border-accent-red/40 bg-accent-red/10 px-2 py-1 text-[11px] text-accent-red hover:bg-accent-red/20';
 
 function describeTokenStatus(s: TokenStatus): string {
-  if (s === 'present') return '✓ present (decryptable)';
-  if (s === 'unreadable') return "⚠ unreadable (file exists, OS can't decrypt — re-enter)";
+  if (s === 'keychain') return '✓ present (OS keychain)';
+  if (s === 'machine-bound') return '✓ present (machine-bound fallback — keychain unavailable)';
+  if (s === 'unreadable') return '⚠ unreadable (file exists, no backend can decrypt — re-enter)';
   return '✗ missing';
 }
 

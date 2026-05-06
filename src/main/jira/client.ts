@@ -24,7 +24,7 @@ export function getClients(): ClientPair {
   }
   if (status === 'unreadable') {
     throw new Error(
-      "Saved token can't be decrypted. This commonly happens after upgrading an unsigned macOS build (the keychain key changes). In Settings, click Clear next to API Token and re-enter the token.",
+      "Saved token can't be decrypted by either the OS keychain or the machine-bound fallback. In Settings, click Clear next to API Token and re-enter the token.",
     );
   }
 

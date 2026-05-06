@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-06
+
+### Added
+
+- **Machine-bound token encryption fallback.** When the OS keychain isn't accessible (typical on unsigned macOS builds where `safeStorage.isEncryptionAvailable()` returns false), goojira now falls back to AES-256-GCM with a key derived from a stable machine identifier (`IOPlatformUUID` on macOS, `/etc/machine-id` on Linux, `MachineGuid` on Windows) plus the app bundle path. Strictly stronger than plaintext (the file isn't grep-able), tied to the host machine, and free — no Apple Developer ID required to start using the app.
+- Settings UI now shows which storage backend is active: *"stored in OS keychain"* (preferred) or *"stored (machine-bound encryption)"* with a short note explaining the trade-off.
+
+### Fixed
+
+- **Save-token errors no longer fail silently.** Previously, when `setApiToken` threw (e.g., because OS encryption was unavailable), the renderer swallowed the rejection and the UI looked idle while the file was never written. Now the Settings page surfaces a red error banner with the underlying message.
+
 ## [0.1.2] - 2026-05-06
 
 ### Fixed

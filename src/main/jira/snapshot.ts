@@ -424,7 +424,7 @@ export async function testConnection(): Promise<ConnectionTestResult> {
       error: "Saved token can't be decrypted.",
       diagnostic: {
         url: attemptedUrl,
-        hint: "Your token is on disk but the OS can't decrypt it. This commonly happens after upgrading an unsigned macOS build — each ad-hoc signature gets its own keychain key, so the old token.bin can't be unlocked under the new signature. Click Clear next to API Token and paste the token in again to re-encrypt under the new identity.",
+        hint: "Your token is on disk but neither the OS keychain nor the machine-bound fallback could decrypt it. Click Clear next to API Token and paste the token in again.",
         preflightWarnings,
       },
     };
