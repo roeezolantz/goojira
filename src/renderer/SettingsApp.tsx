@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { useStore, SECTION_LABELS, SECTION_ORDER } from './store';
-import type { BoardInfo, ConnectionTestResult, ProjectInfo } from '@shared/types';
+import type { BoardInfo, ConnectionTestResult, ProjectInfo, TokenStatus } from '@shared/types';
 import { PermissionsCard } from './components/PermissionsCard';
 import { DebugPanel } from './components/DebugPanel';
 
@@ -10,7 +10,7 @@ export function SettingsApp() {
   const setSettings = useStore((s) => s.setSettings);
 
   const [token, setToken] = useState('');
-  const [hasToken, setHasToken] = useState(false);
+  const [tokenStatus, setTokenStatus] = useState<TokenStatus>('missing');
   const [test, setTest] = useState<ConnectionTestResult | null>(null);
   const [testing, setTesting] = useState(false);
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
@@ -21,25 +21,29 @@ export function SettingsApp() {
   const [debugUnlocked, setDebugUnlocked] = useState(false);
   const [versionTaps, setVersionTaps] = useState(0);
 
+  const refreshTokenStatus = () => api.invoke('auth:get-token-status').then(setTokenStatus);
+
   useEffect(() => {
     void useStore.getState().init();
-    void api.invoke('auth:has-token').then(setHasToken);
+    void refreshTokenStatus();
     void api.invoke('app:get-version').then(setVersion);
   }, []);
 
   if (!settings) return <div className="app-settings p-6 text-fg-muted">Loading…</div>;
 
+  const hasToken = tokenStatus === 'present';
+
   const saveToken = async () => {
     if (!token.trim()) return;
     await api.invoke('auth:set-token', { token: token.trim() });
     setToken('');
-    setHasToken(true);
+    await refreshTokenStatus();
   };
 
   const clearToken = async () => {
     await api.invoke('auth:clear-token');
-    setHasToken(false);
     setTest(null);
+    await refreshTokenStatus();
   };
 
   const runTest = async () => {
@@ -103,7 +107,7 @@ export function SettingsApp() {
           />
         </Field>
         <Field label="API Token">
-          {hasToken ? (
+          {tokenStatus === 'present' ? (
             <div className="flex items-center gap-2">
               <span className="rounded bg-bg-elevated px-2 py-1 text-xs text-fg-muted">
                 ●●●●●●●● stored in OS keychain
@@ -111,6 +115,20 @@ export function SettingsApp() {
               <button onClick={() => void clearToken()} className={btnSecondary}>
                 Clear
               </button>
+            </div>
+          ) : tokenStatus === 'unreadable' ? (
+            <div className="flex flex-col gap-2">
+              <div className="rounded border border-accent-yellow/40 bg-accent-yellow/10 p-2 text-xs text-accent-yellow">
+                <div className="mb-1 font-semibold">Stored token can&apos;t be decrypted.</div>
+                Common after upgrading an unsigned build — the OS keychain key
+                changes with each ad-hoc signature. Click Clear and paste the
+                token in again.
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => void clearToken()} className={btnSecondary}>
+                  Clear &amp; re-enter
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">

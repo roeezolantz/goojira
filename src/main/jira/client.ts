@@ -1,5 +1,5 @@
 import { Version3Client, AgileClient } from 'jira.js';
-import { getApiToken } from '../store/secrets';
+import { getApiToken, getApiTokenStatus } from '../store/secrets';
 import { getSettings } from '../store/settings';
 
 interface ClientPair {
@@ -15,10 +15,24 @@ function buildSignature(host: string, email: string, token: string): string {
 
 export function getClients(): ClientPair {
   const { baseUrl, email } = getSettings();
-  const token = getApiToken();
-  if (!baseUrl || !email || !token) {
-    throw new Error('Jira is not configured. Open Settings and add URL, email, and API token.');
+  if (!baseUrl) throw new Error('Jira URL is not configured. Open Settings and add it.');
+  if (!email) throw new Error('Email is not configured. Open Settings and add it.');
+
+  const status = getApiTokenStatus();
+  if (status === 'missing') {
+    throw new Error('No API token saved. Paste a token in Settings and click Save.');
   }
+  if (status === 'unreadable') {
+    throw new Error(
+      "Saved token can't be decrypted. This commonly happens after upgrading an unsigned macOS build (the keychain key changes). In Settings, click Clear next to API Token and re-enter the token.",
+    );
+  }
+
+  const token = getApiToken();
+  if (!token) {
+    throw new Error('Token is empty after decryption.');
+  }
+
   const signature = buildSignature(baseUrl, email, token);
   if (cached && cached.signature === signature) return cached.pair;
 

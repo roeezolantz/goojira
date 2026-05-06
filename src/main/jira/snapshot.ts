@@ -9,7 +9,7 @@ import type {
   SectionKey,
 } from '@shared/types';
 import { getSettings } from '../store/settings';
-import { hasApiToken } from '../store/secrets';
+import { getApiTokenStatus } from '../store/secrets';
 import { getClients } from './client';
 import { queries, type QueryContext } from './queries';
 import { withLog } from './logger';
@@ -406,13 +406,25 @@ export async function testConnection(): Promise<ConnectionTestResult> {
     };
   }
 
-  if (!hasApiToken()) {
+  const tokenStatus = getApiTokenStatus();
+  if (tokenStatus === 'missing') {
     return {
       ok: false,
       error: 'No API token saved.',
       diagnostic: {
         url: attemptedUrl,
         hint: 'Save an API token first (paste it in the field above and click Save).',
+        preflightWarnings,
+      },
+    };
+  }
+  if (tokenStatus === 'unreadable') {
+    return {
+      ok: false,
+      error: "Saved token can't be decrypted.",
+      diagnostic: {
+        url: attemptedUrl,
+        hint: "Your token is on disk but the OS can't decrypt it. This commonly happens after upgrading an unsigned macOS build — each ad-hoc signature gets its own keychain key, so the old token.bin can't be unlocked under the new signature. Click Clear next to API Token and paste the token in again to re-encrypt under the new identity.",
         preflightWarnings,
       },
     };

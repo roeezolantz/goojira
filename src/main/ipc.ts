@@ -25,7 +25,9 @@ import { getSettings, updateSettings } from './store/settings';
 import {
   setApiToken,
   hasApiToken,
+  getApiTokenStatus,
   clearApiToken,
+  isEncryptionAvailable,
 } from './store/secrets';
 import { queries } from './jira/queries';
 import { invalidateClients } from './jira/client';
@@ -113,6 +115,7 @@ const handlers: HandlerMap = {
     invalidateClients();
   },
   'auth:has-token': () => hasApiToken(),
+  'auth:get-token-status': () => getApiTokenStatus(),
   'auth:clear-token': () => {
     clearApiToken();
     invalidateClients();
@@ -308,6 +311,8 @@ const handlers: HandlerMap = {
     userDataPath: app.getPath('userData'),
     logsPath: app.getPath('logs'),
     hasToken: hasApiToken(),
+    tokenStatus: getApiTokenStatus(),
+    encryptionAvailable: isEncryptionAvailable(),
     settings: getSettings(),
     permissions: permissionsStatus(),
   }),

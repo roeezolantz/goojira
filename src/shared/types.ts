@@ -133,6 +133,11 @@ export interface TransitionInfo {
   toStatusCategory: 'todo' | 'indeterminate' | 'done' | 'unknown';
 }
 
+export type TokenStatus =
+  | 'missing' // No token file on disk.
+  | 'unreadable' // File exists but can't be decrypted (typical after upgrading an unsigned build).
+  | 'present'; // File exists and decrypts successfully.
+
 export interface ConnectionDiagnostic {
   // The URL we attempted to reach (best-effort; may include the request path).
   url: string;
@@ -169,6 +174,7 @@ export interface IpcContract {
   'settings:set': { req: Partial<Settings>; res: Settings };
   'auth:set-token': { req: { token: string }; res: void };
   'auth:has-token': { req: void; res: boolean };
+  'auth:get-token-status': { req: void; res: TokenStatus };
   'auth:clear-token': { req: void; res: void };
   'jira:test-connection': { req: void; res: ConnectionTestResult };
   'jira:list-projects': { req: void; res: ProjectInfo[] };
@@ -230,6 +236,8 @@ export interface DebugInfo {
   userDataPath: string;
   logsPath: string;
   hasToken: boolean;
+  tokenStatus: TokenStatus;
+  encryptionAvailable: boolean;
   settings: Settings;
   permissions: PermissionsStatus;
 }

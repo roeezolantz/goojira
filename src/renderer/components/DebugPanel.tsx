@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { ApiLogEntry, DebugInfo, Snapshot } from '@shared/types';
+import type { ApiLogEntry, DebugInfo, Snapshot, TokenStatus } from '@shared/types';
 import {
   RefreshCw,
   FolderOpen,
@@ -123,7 +123,8 @@ export function DebugPanel() {
             ['OS', info.osRelease],
             ['User data', info.userDataPath],
             ['Logs', info.logsPath],
-            ['Token saved', info.hasToken ? '✓' : '✗'],
+            ['Token status', describeTokenStatus(info.tokenStatus)],
+            ['Encryption available', info.encryptionAvailable ? '✓' : '✗'],
             ['Accessibility', info.permissions.accessibility ? '✓' : '✗'],
             ['⌘⇧J registered', info.permissions.shortcutRegistered ? '✓' : '✗'],
           ]} />
@@ -338,6 +339,12 @@ const btn =
 const btnDanger =
   'inline-flex items-center gap-1.5 rounded border border-accent-red/40 bg-accent-red/10 px-2 py-1 text-[11px] text-accent-red hover:bg-accent-red/20';
 
+function describeTokenStatus(s: TokenStatus): string {
+  if (s === 'present') return '✓ present (decryptable)';
+  if (s === 'unreadable') return "⚠ unreadable (file exists, OS can't decrypt — re-enter)";
+  return '✗ missing';
+}
+
 function buildDiagnosticBundle(
   info: DebugInfo,
   logs: ApiLogEntry[],
@@ -361,10 +368,11 @@ function buildDiagnosticBundle(
   lines.push(`OS: ${info.osRelease}`);
   lines.push(`Electron: ${info.electronVersion} · Chrome: ${info.chromeVersion} · Node: ${info.nodeVersion}`);
   lines.push('');
-  lines.push('## Permissions');
+  lines.push('## Permissions & token');
   lines.push(`- Accessibility: ${info.permissions.accessibility ? '✓' : '✗'}`);
   lines.push(`- ⌘⇧J registered: ${info.permissions.shortcutRegistered ? '✓' : '✗'}`);
-  lines.push(`- Token saved: ${info.hasToken ? '✓' : '✗'}`);
+  lines.push(`- Token status: ${describeTokenStatus(info.tokenStatus)}`);
+  lines.push(`- Encryption available: ${info.encryptionAvailable ? '✓' : '✗'}`);
   lines.push('');
   lines.push('## Settings (token redacted, email masked)');
   lines.push('```json');
