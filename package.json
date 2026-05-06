@@ -1,6 +1,6 @@
 {
   "name": "goojira",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A lean, cross-platform menubar/tray companion for Jira — your active sprint at a glance.",
   "main": ".vite/build/main.js",

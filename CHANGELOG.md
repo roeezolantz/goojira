@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-06
+
+### Added
+
+- Connection diagnostics on the Settings *Test connection* button: HTTP status, attempted URL, human-readable hint mapping the failure to a likely cause (auth, permission, workspace not found, rate limit, DNS, TLS interception, etc.), pre-flight URL warnings, and the truncated response body.
+- Debug panel **API call log** pane — a ring buffer of the last 100 Jira API calls with timestamps, endpoints, durations, HTTP status, and error messages.
+- Debug panel **Copy diagnostic bundle** button — emits a markdown report (env, settings with token redacted and email masked, permissions, snapshot errors, recent API log) ready to paste into a GitHub issue.
+
+### Documentation
+
+- README install path via Homebrew tap (`brew install --cask roeezolantz/goojira/goojira`) plus the `xattr -cr` quarantine workaround for unsigned macOS builds.
+
 ## [0.1.0] - 2026-04-29
 
 ### Added
