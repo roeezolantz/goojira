@@ -133,10 +133,34 @@ export interface TransitionInfo {
   toStatusCategory: 'todo' | 'indeterminate' | 'done' | 'unknown';
 }
 
+export interface ConnectionDiagnostic {
+  // The URL we attempted to reach (best-effort; may include the request path).
+  url: string;
+  // Present when we got an HTTP response back (i.e., not a network error).
+  httpStatus?: number;
+  // Truncated response body, when available. May be JSON-stringified.
+  responseBody?: string;
+  // Human-readable interpretation of what likely went wrong.
+  hint?: string;
+  // Soft pre-flight warnings about settings before the network call (e.g.,
+  // URL doesn't end in .atlassian.net). Present even on success.
+  preflightWarnings?: string[];
+}
+
 export interface ConnectionTestResult {
   ok: boolean;
   error?: string;
   user?: { accountId: string; displayName: string; emailAddress: string };
+  diagnostic?: ConnectionDiagnostic;
+}
+
+export interface ApiLogEntry {
+  ts: string; // ISO timestamp
+  kind: 'call' | 'error';
+  endpoint: string; // logical name, e.g. 'myself', 'search:inProgress'
+  durationMs: number;
+  httpStatus?: number;
+  errorMessage?: string;
 }
 
 // IPC contract — every channel name + its request and response shape.
@@ -181,6 +205,7 @@ export interface IpcContract {
   'shortcuts:register': { req: void; res: { ok: boolean; error?: string } };
   'debug:get-info': { req: void; res: DebugInfo };
   'debug:get-jql': { req: void; res: Record<string, string> };
+  'debug:get-logs': { req: void; res: ApiLogEntry[] };
   'debug:open-user-data': { req: void; res: void };
   'debug:open-devtools': { req: void; res: void };
   'debug:reset-settings': { req: void; res: void };

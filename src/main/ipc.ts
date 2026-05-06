@@ -29,6 +29,7 @@ import {
 } from './store/secrets';
 import { queries } from './jira/queries';
 import { invalidateClients } from './jira/client';
+import { getLogEntries } from './jira/logger';
 import {
   testConnection,
   listProjects,
@@ -321,6 +322,7 @@ const handlers: HandlerMap = {
       Object.entries(queries).map(([k, fn]) => [k, fn(ctx)]),
     );
   },
+  'debug:get-logs': () => getLogEntries(),
   'debug:open-user-data': () => {
     void shell.openPath(app.getPath('userData'));
   },

@@ -9,8 +9,11 @@ import type {
   SectionKey,
 } from '@shared/types';
 import { getSettings } from '../store/settings';
+import { hasApiToken } from '../store/secrets';
 import { getClients } from './client';
 import { queries, type QueryContext } from './queries';
+import { withLog } from './logger';
+import { extractDiagnostic, preflightCheck } from './diagnostic';
 
 const FIELDS = [
   'summary',
@@ -80,7 +83,7 @@ export function mapIssue(raw: any, baseUrl: string): Issue {
   };
 }
 
-async function searchAll(jql: string, baseUrl: string): Promise<Issue[]> {
+async function searchAll(jql: string, baseUrl: string, label: string): Promise<Issue[]> {
   if (!jql.trim()) return [];
   const { v3 } = getClients();
   const out: Issue[] = [];
@@ -90,12 +93,14 @@ async function searchAll(jql: string, baseUrl: string): Promise<Issue[]> {
   let nextPageToken: string | undefined = undefined;
   // Cap iterations so a misconfigured query can't loop forever.
   for (let i = 0; i < 5; i++) {
-    const res: any = await v3.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
-      jql,
-      nextPageToken,
-      maxResults: 50,
-      fields: FIELDS,
-    });
+    const res: any = await withLog(`search:${label}`, () =>
+      v3.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
+        jql,
+        nextPageToken,
+        maxResults: 50,
+        fields: FIELDS,
+      }),
+    );
     const issues = (res.issues ?? []).map((raw: any) => mapIssue(raw, baseUrl));
     out.push(...issues);
     nextPageToken = res.nextPageToken ?? undefined;
@@ -127,7 +132,7 @@ export async function fetchSnapshot(): Promise<Snapshot> {
   ).map(async (key) => {
     try {
       const jql = queries[key](ctx);
-      return [key, await searchAll(jql, settings.baseUrl)] as const;
+      return [key, await searchAll(jql, settings.baseUrl, key)] as const;
     } catch (e) {
       errors.push(`${key}: ${(e as Error).message}`);
       return [key, [] as Issue[]] as const;
@@ -155,7 +160,7 @@ export async function fetchSnapshot(): Promise<Snapshot> {
 
 async function fetchCurrentUser(): Promise<Snapshot['user']> {
   const { v3 } = getClients();
-  const me: any = await v3.myself.getCurrentUser();
+  const me: any = await withLog('myself', () => v3.myself.getCurrentUser());
   return {
     accountId: me.accountId,
     displayName: me.displayName,
@@ -167,14 +172,18 @@ async function fetchActiveSprints(): Promise<Sprint[]> {
   const settings = getSettings();
   if (settings.selectedBoardIds.length === 0) return [];
   const { agile } = getClients();
-  const allBoardsRes: any = await agile.board.getAllBoards({ maxResults: 100 });
+  const allBoardsRes: any = await withLog('boards:listAll', () =>
+    agile.board.getAllBoards({ maxResults: 100 }),
+  );
   const boardNameById = new Map<number, string>();
   for (const b of allBoardsRes.values ?? []) boardNameById.set(b.id, b.name);
 
   const out: Sprint[] = [];
   for (const boardId of settings.selectedBoardIds) {
     try {
-      const res: any = await agile.board.getAllSprints({ boardId, state: 'active' });
+      const res: any = await withLog(`sprints:board=${boardId}`, () =>
+        agile.board.getAllSprints({ boardId, state: 'active' }),
+      );
       for (const s of res.values ?? []) {
         out.push({
           id: s.id,
@@ -200,7 +209,9 @@ export async function listProjects(): Promise<ProjectInfo[]> {
 
   // Try the modern paginated search first.
   try {
-    const res: any = await v3.projects.searchProjects({ maxResults: 100 });
+    const res: any = await withLog('projects:search', () =>
+      v3.projects.searchProjects({ maxResults: 100 }),
+    );
     console.log('[goojira] searchProjects:', {
       total: res.total,
       isLast: res.isLast,
@@ -238,10 +249,12 @@ export async function listProjects(): Promise<ProjectInfo[]> {
 export async function listBoards(projectKey?: string | null): Promise<BoardInfo[]> {
   const { agile } = getClients();
   try {
-    const res: any = await agile.board.getAllBoards({
-      projectKeyOrId: projectKey ?? undefined,
-      maxResults: 100,
-    });
+    const res: any = await withLog('boards:list', () =>
+      agile.board.getAllBoards({
+        projectKeyOrId: projectKey ?? undefined,
+        maxResults: 100,
+      }),
+    );
     console.log('[goojira] getAllBoards:', {
       total: res.total,
       isLast: res.isLast,
@@ -262,7 +275,9 @@ export async function listBoards(projectKey?: string | null): Promise<BoardInfo[
 
 export async function getTransitions(issueKey: string): Promise<TransitionInfo[]> {
   const { v3 } = getClients();
-  const res: any = await v3.issues.getTransitions({ issueIdOrKey: issueKey });
+  const res: any = await withLog(`transitions:get:${issueKey}`, () =>
+    v3.issues.getTransitions({ issueIdOrKey: issueKey }),
+  );
   return (res.transitions ?? []).map((t: any) => ({
     id: t.id,
     name: t.name,
@@ -280,37 +295,43 @@ export async function getTransitions(issueKey: string): Promise<TransitionInfo[]
 
 export async function transition(issueKey: string, transitionId: string): Promise<void> {
   const { v3 } = getClients();
-  await v3.issues.doTransition({
-    issueIdOrKey: issueKey,
-    transition: { id: transitionId },
-  });
+  await withLog(`transition:${issueKey}`, () =>
+    v3.issues.doTransition({
+      issueIdOrKey: issueKey,
+      transition: { id: transitionId },
+    }),
+  );
 }
 
 export async function assignToMe(issueKey: string): Promise<void> {
   const { v3 } = getClients();
-  const me: any = await v3.myself.getCurrentUser();
-  await v3.issues.assignIssue({
-    issueIdOrKey: issueKey,
-    accountId: me.accountId,
-  });
+  const me: any = await withLog('myself', () => v3.myself.getCurrentUser());
+  await withLog(`assign:${issueKey}`, () =>
+    v3.issues.assignIssue({
+      issueIdOrKey: issueKey,
+      accountId: me.accountId,
+    }),
+  );
 }
 
 export async function addComment(issueKey: string, body: string): Promise<void> {
   const { v3 } = getClients();
   // Jira Cloud expects ADF (Atlassian Document Format) for comment bodies.
-  await v3.issueComments.addComment({
-    issueIdOrKey: issueKey,
-    comment: {
-      type: 'doc',
-      version: 1,
-      content: [
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: body }],
-        },
-      ],
-    } as any,
-  });
+  await withLog(`comment:${issueKey}`, () =>
+    v3.issueComments.addComment({
+      issueIdOrKey: issueKey,
+      comment: {
+        type: 'doc',
+        version: 1,
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: body }],
+          },
+        ],
+      } as any,
+    }),
+  );
 }
 
 export async function logWork(
@@ -319,17 +340,19 @@ export async function logWork(
   comment?: string,
 ): Promise<void> {
   const { v3 } = getClients();
-  await v3.issueWorklogs.addWorklog({
-    issueIdOrKey: issueKey,
-    timeSpent,
-    comment: comment
-      ? ({
-          type: 'doc',
-          version: 1,
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }],
-        } as any)
-      : undefined,
-  });
+  await withLog(`worklog:${issueKey}`, () =>
+    v3.issueWorklogs.addWorklog({
+      issueIdOrKey: issueKey,
+      timeSpent,
+      comment: comment
+        ? ({
+            type: 'doc',
+            version: 1,
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }],
+          } as any)
+        : undefined,
+    }),
+  );
 }
 
 export async function createIssue(
@@ -338,13 +361,15 @@ export async function createIssue(
   issueType: string,
 ): Promise<{ key: string; url: string }> {
   const { v3 } = getClients();
-  const res: any = await v3.issues.createIssue({
-    fields: {
-      project: { key: projectKey },
-      summary,
-      issuetype: { name: issueType },
-    },
-  });
+  const res: any = await withLog(`createIssue:${projectKey}`, () =>
+    v3.issues.createIssue({
+      fields: {
+        project: { key: projectKey },
+        summary,
+        issuetype: { name: issueType },
+      },
+    }),
+  );
   return {
     key: res.key,
     url: `${getSettings().baseUrl.replace(/\/$/, '')}/browse/${res.key}`,
@@ -353,20 +378,56 @@ export async function createIssue(
 
 export async function listIssueTypes(projectKey: string): Promise<{ id: string; name: string }[]> {
   const { v3 } = getClients();
-  const res: any = await v3.projects.getProject({
-    projectIdOrKey: projectKey,
-    expand: 'issueTypes',
-  });
+  const res: any = await withLog(`project:${projectKey}`, () =>
+    v3.projects.getProject({
+      projectIdOrKey: projectKey,
+      expand: 'issueTypes',
+    }),
+  );
   return (res.issueTypes ?? [])
     .filter((t: any) => !t.subtask)
     .map((t: any) => ({ id: t.id, name: t.name }));
 }
 
 export async function testConnection(): Promise<ConnectionTestResult> {
+  const settings = getSettings();
+  const preflightWarnings = preflightCheck(settings.baseUrl);
+  const attemptedUrl = `${settings.baseUrl.replace(/\/$/, '')}/rest/api/3/myself`;
+
+  if (!settings.email) {
+    return {
+      ok: false,
+      error: 'Email is empty.',
+      diagnostic: {
+        url: attemptedUrl,
+        hint: 'Email is required for Basic auth — it pairs with the API token.',
+        preflightWarnings,
+      },
+    };
+  }
+
+  if (!hasApiToken()) {
+    return {
+      ok: false,
+      error: 'No API token saved.',
+      diagnostic: {
+        url: attemptedUrl,
+        hint: 'Save an API token first (paste it in the field above and click Save).',
+        preflightWarnings,
+      },
+    };
+  }
+
   try {
     const u = await fetchCurrentUser();
-    return { ok: true, user: u ?? undefined };
+    return {
+      ok: true,
+      user: u ?? undefined,
+      diagnostic: { url: attemptedUrl, httpStatus: 200, preflightWarnings },
+    };
   } catch (e) {
-    return { ok: false, error: (e as Error).message };
+    const diagnostic = extractDiagnostic(e, attemptedUrl);
+    diagnostic.preflightWarnings = preflightWarnings;
+    return { ok: false, error: (e as Error).message, diagnostic };
   }
 }

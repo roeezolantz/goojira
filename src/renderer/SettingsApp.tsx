@@ -142,18 +142,62 @@ export function SettingsApp() {
             id.atlassian.com/manage-profile/security/api-tokens
           </a>
         </p>
-        <div className="flex items-center gap-2">
-          <button onClick={() => void runTest()} className={btnSecondary} disabled={testing}>
-            {testing ? 'Testing…' : 'Test connection'}
-          </button>
-          {test &&
-            (test.ok ? (
-              <span className="text-xs text-accent-green">
-                ✓ Connected as {test.user?.displayName} ({test.user?.emailAddress})
-              </span>
-            ) : (
-              <span className="text-xs text-accent-red">✗ {test.error}</span>
-            ))}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <button onClick={() => void runTest()} className={btnSecondary} disabled={testing}>
+              {testing ? 'Testing…' : 'Test connection'}
+            </button>
+            {test &&
+              (test.ok ? (
+                <span className="text-xs text-accent-green">
+                  ✓ Connected as {test.user?.displayName} ({test.user?.emailAddress})
+                </span>
+              ) : (
+                <span className="text-xs text-accent-red">
+                  ✗ {test.error}
+                  {test.diagnostic?.httpStatus !== undefined &&
+                    ` (HTTP ${test.diagnostic.httpStatus})`}
+                </span>
+              ))}
+          </div>
+          {test?.diagnostic && (test.diagnostic.preflightWarnings?.length || !test.ok) && (
+            <div className="rounded border border-border-subtle bg-bg p-2 text-[11px] text-fg-muted">
+              {test.diagnostic.preflightWarnings && test.diagnostic.preflightWarnings.length > 0 && (
+                <div className="mb-2 rounded border border-accent-yellow/40 bg-accent-yellow/10 p-2 text-accent-yellow">
+                  <div className="mb-0.5 font-semibold">Pre-flight warnings:</div>
+                  <ul className="list-disc pl-4">
+                    {test.diagnostic.preflightWarnings.map((w, i) => (
+                      <li key={i} className="break-words">
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {!test.ok && test.diagnostic.hint && (
+                <div className="mb-2 break-words text-fg">
+                  <span className="font-semibold text-accent-red">Likely cause: </span>
+                  {test.diagnostic.hint}
+                </div>
+              )}
+              {!test.ok && test.diagnostic.url && (
+                <div className="mb-1 break-all">
+                  <span className="text-fg-subtle">URL: </span>
+                  <code className="text-fg">{test.diagnostic.url}</code>
+                </div>
+              )}
+              {!test.ok && test.diagnostic.responseBody && (
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-fg-subtle hover:text-fg">
+                    Response body
+                  </summary>
+                  <pre className="mt-1 max-h-40 overflow-auto rounded bg-bg-elevated p-2 text-[10px] text-fg-muted">
+                    {test.diagnostic.responseBody}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
         </div>
       </Group>
 

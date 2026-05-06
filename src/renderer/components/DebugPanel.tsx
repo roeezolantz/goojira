@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { DebugInfo, Snapshot } from '@shared/types';
+import type { ApiLogEntry, DebugInfo, Snapshot } from '@shared/types';
 import {
   RefreshCw,
   FolderOpen,
@@ -9,20 +9,39 @@ import {
   Copy,
   ChevronDown,
   ChevronRight,
+  ClipboardCopy,
 } from 'lucide-react';
 
 export function DebugPanel() {
   const [info, setInfo] = useState<DebugInfo | null>(null);
   const [jql, setJql] = useState<Record<string, string> | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [logs, setLogs] = useState<ApiLogEntry[]>([]);
   const [snapBusy, setSnapBusy] = useState(false);
-  const [open, setOpen] = useState({ env: true, settings: false, jql: false, snap: false });
+  const [bundleCopied, setBundleCopied] = useState(false);
+  const [open, setOpen] = useState({
+    env: true,
+    settings: false,
+    jql: false,
+    snap: false,
+    logs: true,
+  });
 
   const refresh = async () => {
     const i = await api.invoke('debug:get-info');
     setInfo(i);
     const q = await api.invoke('debug:get-jql');
     setJql(q);
+    const l = await api.invoke('debug:get-logs');
+    setLogs(l);
+  };
+
+  const copyDiagnosticBundle = async () => {
+    if (!info) return;
+    const md = buildDiagnosticBundle(info, logs, snapshot);
+    await navigator.clipboard.writeText(md);
+    setBundleCopied(true);
+    setTimeout(() => setBundleCopied(false), 2000);
   };
 
   const fetchSnap = async () => {
@@ -72,6 +91,10 @@ export function DebugPanel() {
           </button>
           <button onClick={() => void api.invoke('debug:open-devtools')} className={btn}>
             <Bug className="h-3 w-3" /> Open DevTools
+          </button>
+          <button onClick={() => void copyDiagnosticBundle()} className={btn}>
+            <ClipboardCopy className="h-3 w-3" />
+            {bundleCopied ? 'Copied!' : 'Copy diagnostic bundle'}
           </button>
           <button
             onClick={async () => {
@@ -141,6 +164,55 @@ export function DebugPanel() {
             </div>
           </Pane>
         )}
+
+        <Pane
+          label={`API call log (${logs.length})`}
+          isOpen={open.logs}
+          onToggle={() => setOpen((o) => ({ ...o, logs: !o.logs }))}
+        >
+          {logs.length === 0 ? (
+            <div className="text-[11px] text-fg-subtle">
+              No calls recorded yet. Hit{' '}
+              <code className="text-fg-muted">Test connection</code> or{' '}
+              <code className="text-fg-muted">Fetch snapshot now</code> to populate.
+            </div>
+          ) : (
+            <div className="max-h-60 overflow-auto">
+              <table className="w-full text-[10px]">
+                <thead className="sticky top-0 bg-bg text-fg-subtle">
+                  <tr>
+                    <th className="py-0.5 pr-2 text-left font-medium">Time</th>
+                    <th className="py-0.5 pr-2 text-left font-medium">Endpoint</th>
+                    <th className="py-0.5 pr-2 text-right font-medium">ms</th>
+                    <th className="py-0.5 pr-2 text-right font-medium">Status</th>
+                    <th className="py-0.5 text-left font-medium">Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs
+                    .slice()
+                    .reverse()
+                    .map((l, i) => (
+                      <tr
+                        key={`${l.ts}-${i}`}
+                        className={l.kind === 'error' ? 'text-accent-red' : 'text-fg'}
+                      >
+                        <td className="py-0.5 pr-2 font-mono text-fg-subtle">
+                          {l.ts.slice(11, 19)}
+                        </td>
+                        <td className="py-0.5 pr-2 font-mono">{l.endpoint}</td>
+                        <td className="py-0.5 pr-2 text-right font-mono">{l.durationMs}</td>
+                        <td className="py-0.5 pr-2 text-right font-mono">
+                          {l.httpStatus ?? (l.kind === 'error' ? '—' : 'ok')}
+                        </td>
+                        <td className="break-all py-0.5 font-mono">{l.errorMessage ?? ''}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Pane>
 
         {snapshot && (
           <Pane
@@ -265,3 +337,59 @@ const btn =
   'inline-flex items-center gap-1.5 rounded border border-border bg-bg px-2 py-1 text-[11px] text-fg hover:bg-bg-hover disabled:opacity-50';
 const btnDanger =
   'inline-flex items-center gap-1.5 rounded border border-accent-red/40 bg-accent-red/10 px-2 py-1 text-[11px] text-accent-red hover:bg-accent-red/20';
+
+function buildDiagnosticBundle(
+  info: DebugInfo,
+  logs: ApiLogEntry[],
+  snapshot: Snapshot | null,
+): string {
+  // Redact the token and email masked to first letter + domain to avoid
+  // pasting raw credentials when the user shares this.
+  const settingsForReport = {
+    ...info.settings,
+    email: info.settings.email
+      ? info.settings.email.replace(/^(.).*(@.*)$/, '$1***$2')
+      : '',
+  };
+
+  const lines: string[] = [];
+  lines.push('# goojira diagnostic bundle');
+  lines.push('');
+  lines.push(`Generated: ${new Date().toISOString()}`);
+  lines.push(`App: v${info.appVersion}`);
+  lines.push(`Platform: ${info.platform} (${info.arch})`);
+  lines.push(`OS: ${info.osRelease}`);
+  lines.push(`Electron: ${info.electronVersion} · Chrome: ${info.chromeVersion} · Node: ${info.nodeVersion}`);
+  lines.push('');
+  lines.push('## Permissions');
+  lines.push(`- Accessibility: ${info.permissions.accessibility ? '✓' : '✗'}`);
+  lines.push(`- ⌘⇧J registered: ${info.permissions.shortcutRegistered ? '✓' : '✗'}`);
+  lines.push(`- Token saved: ${info.hasToken ? '✓' : '✗'}`);
+  lines.push('');
+  lines.push('## Settings (token redacted, email masked)');
+  lines.push('```json');
+  lines.push(JSON.stringify(settingsForReport, null, 2));
+  lines.push('```');
+  lines.push('');
+
+  if (snapshot?.errors && snapshot.errors.length > 0) {
+    lines.push('## Last snapshot errors');
+    for (const e of snapshot.errors) lines.push(`- ${e}`);
+    lines.push('');
+  }
+
+  lines.push(`## Recent API calls (${logs.length})`);
+  if (logs.length === 0) {
+    lines.push('_(empty — try Test connection or Fetch snapshot)_');
+  } else {
+    lines.push('| time | endpoint | ms | status | error |');
+    lines.push('|---|---|---|---|---|');
+    for (const l of logs.slice(-50)) {
+      const status = l.httpStatus ?? (l.kind === 'error' ? '—' : 'ok');
+      const err = l.errorMessage ? l.errorMessage.replace(/\|/g, '\\|') : '';
+      lines.push(`| ${l.ts.slice(11, 19)} | ${l.endpoint} | ${l.durationMs} | ${status} | ${err} |`);
+    }
+  }
+
+  return lines.join('\n');
+}
