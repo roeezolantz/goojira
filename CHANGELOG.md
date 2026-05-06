@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-06
+
+### Fixed
+
+- Detect when a stored API token can't be decrypted (commonly happens after upgrading an unsigned macOS build — each ad-hoc signature gets its own keychain key). Instead of the misleading *"Jira is not configured"* error, Settings now shows a clear yellow warning with a one-click *Clear & re-enter* button. The diagnostic bundle and Debug panel surface the token status and `safeStorage` encryption availability.
+
 ## [0.1.1] - 2026-05-06
 
 ### Added
