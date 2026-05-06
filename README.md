@@ -39,11 +39,24 @@ Inspired by GitHub's tiny menubar app: dense rows, dark theme, click-to-open, no
 
 ### macOS (Apple Silicon) — via Homebrew
 
+One shot:
+
 ```bash
-brew install --cask --no-quarantine roeezolantz/goojira/goojira
+brew install --cask roeezolantz/goojira/goojira
+xattr -cr /Applications/goojira.app          # required while builds are unsigned, see Caveat
 ```
 
-The `--no-quarantine` flag is required while builds are unsigned (see *Caveat* below). Upgrade later with `brew upgrade --cask goojira`.
+Or, if you'd rather tap once and use a short name:
+
+```bash
+brew tap roeezolantz/goojira
+brew install --cask goojira
+xattr -cr /Applications/goojira.app
+```
+
+Either way, `brew upgrade --cask goojira` updates to future releases.
+
+(Power users: setting `HOMEBREW_CASK_OPTS="--no-quarantine"` in your shell skips the `xattr` step on first install. Modern Homebrew 5.x removed the per-install `--no-quarantine` flag.)
 
 ### Direct downloads
 
