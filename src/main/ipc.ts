@@ -32,6 +32,7 @@ import {
 import { queries } from './jira/queries';
 import { invalidateClients } from './jira/client';
 import { getLogEntries } from './jira/logger';
+import { safeOpenExternal } from './shell-util';
 import {
   testConnection,
   listProjects,
@@ -142,7 +143,7 @@ const handlers: HandlerMap = {
   },
   'jira:list-issue-types': ({ projectKey }) => listIssueTypes(projectKey),
   'app:open-external': ({ url }) => {
-    void shell.openExternal(url);
+    void safeOpenExternal(url);
   },
   'app:open-settings': () => {
     openSettingsWindow();
@@ -181,7 +182,7 @@ const handlers: HandlerMap = {
         : pane === 'inputMonitoring'
           ? 'x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent'
           : 'x-apple.systempreferences:com.apple.preference.security?Privacy_Automation';
-    void shell.openExternal(url);
+    void safeOpenExternal(url);
   },
   'permissions:request-accessibility': () => {
     if (process.platform !== 'darwin') return { granted: true };
@@ -239,7 +240,7 @@ const handlers: HandlerMap = {
       {
         label: 'Open in browser',
         click: () => {
-          void shell.openExternal(issueUrl);
+          void safeOpenExternal(issueUrl);
         },
       },
       {
